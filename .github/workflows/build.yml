@@ -1,0 +1,18 @@
+name: Build Espresso.exe
+
+on:
+  create:
+    ref_type: "tag"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: build
+        run: mingw32-make
+
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "Espresso.exe"
