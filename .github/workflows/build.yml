@@ -6,9 +6,14 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: mingw
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: x86
 
       - name: build
         run: mingw32-make
