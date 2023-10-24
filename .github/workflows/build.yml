@@ -16,7 +16,7 @@ jobs:
           platform: x86
 
       - name: build
-        run: mingw32-make
+        run: make
 
       - uses: ncipollo/release-action@v1
         with:
