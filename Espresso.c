@@ -1,9 +1,10 @@
+#include "project.h"
+#include "resources/embed.rc"
+
 #define _WIN32_WINNT 0x0601 /* Windows 7 */
 #include <windows.h>
 #include <commctrl.h>
 #include <shlwapi.h>
-
-#include "resources/embed.rc"
 
 NOTIFYICONDATA tray = {
 	.cbSize = sizeof(NOTIFYICONDATA),
@@ -78,13 +79,13 @@ LRESULT CALLBACK WndProc(HWND wnd, UINT id, WPARAM wp, LPARAM lp)
 int APIENTRY WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR args, int show)
 {
 	/* Only allow a single instance */
-	CreateMutex(NULL, FALSE, TEXT(R_NAME));
+	CreateMutex(NULL, FALSE, TEXT(PROG_NAME));
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
 		return 0;
 	}
 
 	/* Check the saved state */
-	reg.path = TEXT("Software\\" R_NAME);
+	reg.path = TEXT("Software\\" PROG_NAME);
 	reg.label = TEXT("Enabled");
 	reg.size = sizeof(DWORD);
 	if (RegOpenKey(HKEY_CURRENT_USER, reg.path, &reg.key)) {
@@ -101,15 +102,15 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR args, int show)
 	}
 
 	/* Load the tray icons */
-	LoadIconMetric(inst, MAKEINTRESOURCE(R_ICON_EMPTY), LIM_SMALL, &icon.empty);
-	LoadIconMetric(inst, MAKEINTRESOURCE(R_ICON_FULL), LIM_SMALL, &icon.full);
+	LoadIconMetric(inst, MAKEINTRESOURCE(ICON_EMPTY), LIM_SMALL, &icon.empty);
+	LoadIconMetric(inst, MAKEINTRESOURCE(ICON_FULL), LIM_SMALL, &icon.full);
 	tray.hIcon = reg.state? icon.full : icon.empty;
 
 	/* Hidden window connects the icon to WndProc() */
 	WNDCLASS class = {
 		.hInstance = inst,
 		.lpfnWndProc = WndProc,
-		.lpszClassName = TEXT(R_NAME)
+		.lpszClassName = TEXT(PROG_NAME)
 	};
 	tray.hWnd = CreateWindow(
 		MAKEINTATOM(RegisterClass(&class)), /* lpClassName */
