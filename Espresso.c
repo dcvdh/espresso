@@ -43,14 +43,8 @@ LRESULT CALLBACK WndProc(HWND wnd, UINT id, WPARAM wp, LPARAM lp)
 
 	/* Only handle left-clicks */
 	else if (id == tray.uCallbackMessage && lp == WM_LBUTTONUP) {
-		if (reg.state) {
-			reg.state = 0;
-			tray.hIcon = icon.empty;
-		}
-		else {
-			reg.state = 1;
-			tray.hIcon = icon.full;
-		}
+		reg.state = !reg.state;
+		tray.hIcon = reg.state? icon.full : icon.empty;
 
 		/* Clear any notifications */
 		tray.uFlags &= ~NIF_INFO;
