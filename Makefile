@@ -6,7 +6,6 @@ CFLAGS   = -Os -fno-ident -fno-asynchronous-unwind-tables ${WARNINGS}
 CPPFLAGS = -DUNICODE
 LDFLAGS  = -nostdlib -s -e Start -Wl,--subsystem,windows
 LDLIBS   = -lkernel32 -luser32 -lshell32 -ladvapi32
-WINDRES  =  windres
 
 RESULT = Espresso.exe
 all: ${RESULT}
@@ -21,7 +20,7 @@ resources.rc: manifest.xml $(wildcard icons/*.ico)
 	${LINK.c} $^ -o $@ ${LDLIBS}
 
 %.o: %.rc
-	${WINDRES} ${CPPFLAGS} $< $@
+	windres ${CPPFLAGS} $< $@
 
 clean:
 	rm *.exe *.o

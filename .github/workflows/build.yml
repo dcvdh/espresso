@@ -14,12 +14,12 @@ jobs:
 
       - name: Install w64devkit
         run: |
-          aria2c "https://github.com/skeeto/w64devkit/releases/download/v1.23.0/w64devkit-i686-1.23.0.zip"
-          7z x "w64devkit-i686-1.23.0.zip"
+          aria2c "https://github.com/skeeto/w64devkit/releases/download/v1.23.0/w64devkit-1.23.0.zip"
+          7z x "w64devkit-1.23.0.zip"
           echo "$PWD\w64devkit\bin" | out-file -filepath $env:GITHUB_PATH -encoding utf8 -append
 
       - name: Make
-        run: make CC=i686-w64-mingw32-gcc WINDRES=i686-w64-mingw32-windres
+        run: make
 
       - name: Create release
         env:
