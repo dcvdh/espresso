@@ -3,6 +3,7 @@
 name: Build Espresso.exe
 
 on:
+  workflow_dispatch:
   create:
     ref_type: "tag"
 
@@ -18,7 +19,7 @@ jobs:
           platform: x86
 
       - name: build
-        run: make
+        run: make CC=i686-w64-mingw32-gcc WINDRES=i686-w64-mingw32-windres
 
       - uses: ncipollo/release-action@v1
         with:
