@@ -3,7 +3,6 @@
 name: Build Espresso.exe
 
 on:
-  workflow_dispatch:
   create:
     ref_type: "tag"
 
@@ -13,14 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: mingw
-        uses: egor-tensin/setup-mingw@v2
-        with:
-          platform: x86
+      - name: Install MinGW
+        run: sudo apt update
+           | sudo apt install -y mingw-w64
 
-      - name: build
+      - name: Make
         run: make CC=i686-w64-mingw32-gcc WINDRES=i686-w64-mingw32-windres
 
-      - uses: ncipollo/release-action@v1
-        with:
-          artifacts: "Espresso.exe"
+      - name: Create release
+        env:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+        run: gh release --latest --verify-tag ${GITHUB_REF##*/} Espresso.exe

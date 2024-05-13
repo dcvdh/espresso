@@ -24,7 +24,7 @@ NOTIFYICONDATA tray = {
 	.uFlags = NIF_ICON | NIF_MESSAGE
 };
 
-VOID Caffeinate() {
+VOID CALLBACK Caffeinate() {
 	// This is where the magic happens.
 	if (SetThreadExecutionState(ES_SYSTEM_REQUIRED) == 0) {
 		ShowErrorDialog(ESPRESSO,L"Failed to prevent Windows from sleeping!");

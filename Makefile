@@ -24,4 +24,4 @@ resources.rc: manifest.xml $(wildcard icons/*.ico)
 	${WINDRES} ${CPPFLAGS} $< $@
 
 clean:
-	git clean -dXf
+	rm *.exe *.o
