@@ -24,4 +24,4 @@ jobs:
       - name: Create release
         env:
           github_token: ${{secrets.GITHUB_TOKEN}}
-        run: gh release --latest --verify-tag ${GITHUB_REF##*/} Espresso.exe
+        run: gh release create --latest --verify-tag ${GITHUB_REF##*/} Espresso.exe
