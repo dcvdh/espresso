@@ -24,4 +24,4 @@ jobs:
       - name: Create release
         env:
           github_token: ${{secrets.GITHUB_TOKEN}}
-        run: gh release create --latest ${GITHUB_REF_NAME} ./Espresso.exe
+        run: gh release create --latest ${{GITHUB_REF_NAME}} ./Espresso.exe
