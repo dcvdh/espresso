@@ -32,8 +32,7 @@ VOID CALLBACK Caffeinate() {
 
 	wakeup_timer = StartTimer(WAKEUP_INTERVAL, Caffeinate);
 	if (!wakeup_timer) {
-		ShowErrorDialog(ESPRESSO,
-			L"Failed to start the wakeup timer.");
+		ShowErrorDialog(ESPRESSO, L"Failed to start the wakeup timer!");
 	}
 }
 
