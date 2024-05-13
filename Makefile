@@ -1,17 +1,26 @@
-CC = i686-w64-mingw32-gcc
-WINDRES = i686-w64-mingw32-windres
+# This is free and unencumbered software released into the public domain.
 
-CFLAGS = -O2 -Wall
+WARNINGS = -Wall -Wextra -Wcast-qual -Woverlength-strings -Wpointer-arith \
+           -Wvla -Wwrite-strings -Wsign-compare
+CFLAGS   = -Os -fno-ident -fno-asynchronous-unwind-tables ${WARNINGS}
 CPPFLAGS = -DUNICODE
-LDFLAGS = -static -s -Wl,--subsystem,windows
-LDLIBS = -lcomctl32 -lshlwapi
+LDFLAGS  = -nostdlib -s -e Start -Wl,--subsystem,windows
+LDLIBS   = -lkernel32 -luser32 -lshell32 -ladvapi32
 
-Espresso.exe: resources/embed.o
+RESULT = Espresso.exe
+all: ${RESULT}
+
+${RESULT}: resources.o
+
+Espresso.c: utilities.h resources.rc
+
+resources.rc: manifest.xml $(wildcard icons/*.ico)
 
 %.exe: %.c
 	${LINK.c} $^ -o $@ ${LDLIBS}
+
 %.o: %.rc
-	${WINDRES} --use-temp-file ${CPPFLAGS} $< $@
+	windres ${CPPFLAGS} $< $@
 
 clean:
 	git clean -dXf

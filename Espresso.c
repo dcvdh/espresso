@@ -1,10 +1,22 @@
-#include "project.h"
-#include "resources/embed.rc"
+// This is free and unencumbered software released into the public domain.
 
-#define _WIN32_WINNT 0x0601 /* Windows 7 */
+#include "resources.rc"
+#include "utilities.h"
 #include <windows.h>
-#include <commctrl.h>
-#include <shlwapi.h>
+
+#define ESPRESSO        L"Espresso"
+#define WAKEUP_INTERVAL 30 * 1000//ms
+
+HICON   empty_icon;
+HICON   full_icon;
+
+LPCWSTR reg_path  = L"SOFTWARE\\" ESPRESSO;
+LPCWSTR reg_label = L"Enabled";
+HKEY    reg_key;
+
+UINT    taskbar_created_msg;
+UINT    wakeup_timer;
+BOOL    enabled;
 
 NOTIFYICONDATA tray = {
 	.cbSize = sizeof(NOTIFYICONDATA),
@@ -12,126 +24,103 @@ NOTIFYICONDATA tray = {
 	.uFlags = NIF_ICON | NIF_MESSAGE
 };
 
-struct {
-	HKEY key;
-	LPTSTR path;
-	LPTSTR label;
-	DWORD state;
-	DWORD size;
-} reg;
+VOID Caffeinate() {
+	// This is where the magic happens.
+	if (SetThreadExecutionState(ES_SYSTEM_REQUIRED) == 0) {
+		ShowErrorDialog(ESPRESSO,L"Failed to prevent Windows from sleeping!");
+	}
 
-struct {
-	HICON empty;
-	HICON full;
-} icon;
+	wakeup_timer = StartTimer(WAKEUP_INTERVAL, Caffeinate);
+	if (!wakeup_timer) {
+		ShowErrorDialog(ESPRESSO,
+			L"Failed to start the wakeup timer.");
+	}
+}
 
-struct {
-	UINT create;
-} msg;
+BOOL ReflectState(BOOL enabled) {
+	SetTrayIcon(&tray, enabled? full_icon : empty_icon);
+	return SetRegistryDword(reg_key, reg_label, enabled);
+}
 
-LRESULT CALLBACK WndProc(HWND wnd, UINT id, WPARAM wp, LPARAM lp)
+LRESULT CALLBACK HandleMessage(HWND window, UINT msg, WPARAM wp, LPARAM lp)
 {
-	if (id == WM_TIMER) {
-		if (reg.state) {
-			/* This is where the magic happens */
-			SetThreadExecutionState(ES_SYSTEM_REQUIRED);
-		}
-
-		/* 30 second repeat */
-		SetTimer(tray.hWnd, 1, 30 * 1000, NULL);
+	if (msg == tray.uCallbackMessage && lp == WM_LBUTTONUP) {
+		ReflectState(enabled = !enabled);
+		if (enabled) Caffeinate();
+		else StopTimer(wakeup_timer);
 	}
 
-	/* Only handle left-clicks */
-	else if (id == tray.uCallbackMessage && lp == WM_LBUTTONUP) {
-		reg.state = !reg.state;
-		tray.hIcon = reg.state? icon.full : icon.empty;
-
-		/* Clear any notifications */
-		tray.uFlags &= ~NIF_INFO;
-		Shell_NotifyIcon(NIM_MODIFY, &tray);
-
-		/* Save state to the registry */
-		RegSetValueEx(reg.key, reg.label, 0, REG_DWORD, (BYTE*) &reg.state, reg.size);
+	else if (msg == taskbar_created_msg) {
+		CreateTrayIcon(&tray);
 	}
 
-	else if (id == msg.create) {
-		Shell_NotifyIcon(NIM_ADD, &tray);
-	}
-
-	else if (id == WM_DESTROY) {
-		Shell_NotifyIcon(NIM_DELETE, &tray);
+	else if (msg == WM_CLOSE) {
+		DestroyTrayIcon(&tray);
+		DestroyWindow(window);
 		PostQuitMessage(0);
 	}
 
 	else {
-		return DefWindowProc(wnd, id, wp, lp);
+		return DefWindowProc(window, msg, wp, lp);
 	}
 
 	return 0;
 }
 
-int APIENTRY WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR args, int show)
-{
-	/* Only allow a single instance */
-	CreateMutex(NULL, FALSE, TEXT(PROG_NAME));
-	if (GetLastError() == ERROR_ALREADY_EXISTS) {
-		return 0;
+static VOID SwitchToMessageLoop() {
+	MSG message; BOOL status;
+
+	while ((status = GetMessage(&message, NULL, 0, 0)) > 0) {
+		DispatchMessage(&message);
 	}
 
-	/* Check the saved state */
-	reg.path = TEXT("Software\\" PROG_NAME);
-	reg.label = TEXT("Enabled");
-	reg.size = sizeof(DWORD);
-	if (RegOpenKey(HKEY_CURRENT_USER, reg.path, &reg.key)) {
-		RegCreateKey(HKEY_CURRENT_USER, reg.path, &reg.key);
+	if (status < 0) {
+		ShowErrorDialog(ESPRESSO, L"Unknown error in message loop!");
+		DestroyTrayIcon(&tray);
+		ExitProcess(1);
 	}
-	RegGetValue(reg.key, NULL, reg.label, RRF_ZEROONFAILURE, NULL, &reg.state, &reg.size);
+}
 
-	/* Make sure we can save it */
-	if (RegSetValueEx(reg.key, reg.label, 0, REG_DWORD, (BYTE*) &reg.state, reg.size)) {
-		StrCpy(tray.szInfoTitle, TEXT("Mi Scusi"));
-		StrCpy(tray.szInfo, TEXT("Can't save state to the registry!"));
-		tray.dwInfoFlags = NIIF_WARNING;
-		tray.uFlags |= NIF_INFO;
+VOID Start() {
+	if (IsAlreadyRunning(ESPRESSO)) {
+		ExitProcess(0);
 	}
 
-	/* Load the tray icons */
-	LoadIconMetric(inst, MAKEINTRESOURCE(ICON_EMPTY), LIM_SMALL, &icon.empty);
-	LoadIconMetric(inst, MAKEINTRESOURCE(ICON_FULL), LIM_SMALL, &icon.full);
-	tray.hIcon = reg.state? icon.full : icon.empty;
+	reg_key = GetRegistryKey(reg_path, TRUE);
+	enabled = GetRegistryDword(reg_key, reg_label);
 
-	/* Hidden window connects the icon to WndProc() */
-	WNDCLASS class = {
-		.hInstance = inst,
-		.lpfnWndProc = WndProc,
-		.lpszClassName = TEXT(PROG_NAME)
-	};
-	tray.hWnd = CreateWindow(
-		MAKEINTATOM(RegisterClass(&class)), /* lpClassName */
-		NULL, /* lpWindowName */
-		WS_POPUP, /* dwStyle */
-		0, /* x */
-		0, /* y */
-		0, /* nWidth */
-		0, /* nHeight */
-		NULL, /* hWndParent */
-		NULL, /* hMenu */
-		inst, /* hInstance */
-		NULL /* lpParam */
-	);
-
-	/* Create the icon and survive Explorer restarts */
-	msg.create = RegisterWindowMessage(TEXT("TaskbarCreated"));
-	PostMessage(tray.hWnd, msg.create, 0, 0);
-
-	/* Start the timer loop */
-	PostMessage(tray.hWnd, WM_TIMER, 0, 0);
-
-	/* Dispatch messages to WndProc() */
-	MSG queue;
-	while (GetMessage(&queue, NULL, 0, 0) > 0) {
-		DispatchMessage(&queue);
+	empty_icon = LoadTrayIcon(EMPTY_ICON_ID);
+	full_icon = LoadTrayIcon(FULL_ICON_ID);
+	if (empty_icon == NULL || full_icon == NULL) {
+		ShowErrorDialog(ESPRESSO, L"Failed to load embedded icons!");
+		ExitProcess(1);
 	}
 
-	return (int) queue.wParam;
+	// It's necessary to handle this to survive explorer restarts.
+	taskbar_created_msg = RegisterWindowMessage(L"TaskbarCreated");
+
+	tray.hWnd = RegisterMessageHandler(HandleMessage);
+	if (tray.hWnd == NULL) {
+		ShowErrorDialog(ESPRESSO, L"Failed to register message handler!");
+		ExitProcess(1);
+	}
+
+	if (!CreateTrayIcon(&tray)) {
+		ShowErrorDialog(ESPRESSO, L"Failed to create tray icon!");
+		ExitProcess(1);
+	}
+
+	// Check if we can write to the registry upfront to prevent spamming.
+	if (!ReflectState(enabled)) {
+		ShowTrayWarning(&tray, L"Can't save state to the registry!");
+	}
+
+	if (enabled) {
+		Caffeinate();
+	}
+
+	SwitchToMessageLoop();
+	DestroyTrayIcon(&tray);
+
+	ExitProcess(0);
 }

@@ -1,0 +1,46 @@
+// This is free and unencumbered software released into the public domain.
+
+#define MANIFEST_ID    1
+
+#define APP_ICON_ID    100
+#define EMPTY_ICON_ID  101
+#define FULL_ICON_ID   102
+
+#ifndef RC_INVOKED
+	#pragma once
+#else
+	#include <windows.h>
+
+	MANIFEST_ID    RT_MANIFEST "manifest.xml"
+
+	APP_ICON_ID    ICON "icons/app.ico"
+	EMPTY_ICON_ID  ICON "icons/empty.ico"
+	FULL_ICON_ID   ICON "icons/full.ico"
+
+	VS_VERSION_INFO VERSIONINFO
+		FILEVERSION 2024,05,13,0
+		PRODUCTVERSION 2024,05,13,0
+		FILEOS VOS_NT_WINDOWS32
+		FILETYPE VFT_APP
+	BEGIN
+		BLOCK "StringFileInfo"
+		BEGIN
+			BLOCK "00000000"
+			BEGIN
+				VALUE "FileDescription", "Espresso"
+				VALUE "ProductName", "Espresso"
+				VALUE "CompanyName", "Daniel van Houten"
+				VALUE "LegalCopyright", "Public Domain"
+				VALUE "FileVersion", "2024.05.13"
+				VALUE "ProductVersion", "2024.05.13"
+				VALUE "OriginalFilename", "Espresso.exe"
+				VALUE "InternalName", "Espresso.exe"
+			END
+		END
+
+		BLOCK "VarFileInfo"
+		BEGIN
+			VALUE "Translation", 0, 0
+		END
+	END
+#endif

@@ -1,0 +1,65 @@
+<!-- This is free and unencumbered software released into the public domain. -->
+
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+	<!-- We need to load version 6 of comctl32.dll to enable themes,
+	     i.e. to use the system's actual native style instead of the
+	     Windows 95-esque fallback. -->
+	<dependency>
+		<dependentAssembly>
+			<assemblyIdentity
+				name="Microsoft.Windows.Common-Controls"
+				publicKeyToken="6595b64144ccf1df"
+				processorArchitecture="*"
+				version="6.0.0.0"
+				language="*"
+				type="win32"/>
+		</dependentAssembly>
+	</dependency>
+
+	<!-- Although "asInvoker" is the default, specifying it is necessary
+	     to prevent UAC file virtualization from redirecting files to
+	     VirtualStore on certain system. -->
+	<trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+		<security>
+			<requestedPrivileges>
+				<requestedExecutionLevel
+					level="asInvoker"
+					uiAccess="false"/>
+			</requestedPrivileges>
+		</security>
+	</trustInfo>
+
+	<!-- This needs to be specified to avoid running in compatibility
+	     mode. Older values are included along with the latest for the
+	     sake of backwards compatibility. -->
+	<compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+		<application>
+			<!-- 10 / 11 -->
+			<supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>
+			<!-- 8.1 -->
+			<supportedOS Id="{1f676c76-80e1-4239-95bb-83d0f6d0da78}"/>
+			<!-- 8 -->
+			<supportedOS Id="{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}"/>
+			<!-- 7 -->
+			<supportedOS Id="{35138b9a-5d96-4fbd-8e2d-a2440225f93a}"/>
+			<!-- Vista -->
+			<supportedOS Id="{e2011457-1546-43c5-a5fe-008deee3d3f0}"/>
+		</application>
+	</compatibility>
+
+	<!-- This is necessary to enable high-dpi rendering. -->
+	<application xmlns="urn:schemas-microsoft-com:asm.v3">
+		<windowsSettings>
+			<!-- This enables system-wide support on Vista to 8,
+			     and per-monitor support on 8.1 to 10 (1607). -->
+			<dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">
+				true/pm
+			</dpiAware>
+
+			<!-- Improved per-monitor support for 10 (1703). -->
+			<dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">
+				PerMonitorV2
+			</dpiAwareness>
+		</windowsSettings>
+	</application>
+</assembly>
